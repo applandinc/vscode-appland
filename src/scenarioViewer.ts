@@ -21,6 +21,7 @@ export class ScenarioProvider implements vscode.CustomTextEditorProvider {
   private static readonly storeInstructionsKey = 'APPMAP_INSTRUCTIONS_VIEWED';
   private static readonly storeReleaseKey = 'APPMAP_RELEASE_KEY';
   private static readonly storeTelemetryInstallKey = 'APPMAP_TELEMETRY_INSTALL';
+  public static currentWebView;
 
   constructor(private readonly context: vscode.ExtensionContext) {}
 
@@ -32,6 +33,8 @@ export class ScenarioProvider implements vscode.CustomTextEditorProvider {
     webviewPanel: vscode.WebviewPanel
     /* _token: vscode.CancellationToken */
   ): Promise<void> {
+    ScenarioProvider.currentWebView = webviewPanel;
+
     const updateWebview = () => {
       webviewPanel.webview.postMessage({
         type: 'update',
@@ -118,6 +121,7 @@ export class ScenarioProvider implements vscode.CustomTextEditorProvider {
     // Make sure we get rid of the listener when our editor is closed.
     webviewPanel.onDidDispose(() => {
       changeDocumentSubscription.dispose();
+      ScenarioProvider.currentWebView = null;
     });
 
     function openFile(uri: vscode.Uri, lineNumber: number) {

@@ -52,5 +52,27 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     })
   );
 
+  context.subscriptions.push(
+    vscode.commands.registerCommand('appmap.getAppmapState', () => {
+      ScenarioProvider.currentWebView.webview.postMessage({
+        type: 'requestAppmapState',
+      });
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('appmap.setAppmapState', async () => {
+      const state = await vscode.window.showInputBox({
+        placeHolder: 'AppMap state serialized string',
+      });
+      if (state) {
+        ScenarioProvider.currentWebView.webview.postMessage({
+          type: 'setAppmapState',
+          state: state,
+        });
+      }
+    })
+  );
+
   Telemetry.reportStartUp();
 }
