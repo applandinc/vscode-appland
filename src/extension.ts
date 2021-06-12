@@ -7,6 +7,8 @@ import AppMapCollectionFile from './appmapCollectionFile';
 import RemoteRecording from './remoteRecording';
 import { notEmpty } from './util';
 
+const storeTelemetryInstallKey = 'APPMAP_TELEMETRY_INSTALL';
+
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   const localAppMaps = new AppMapCollectionFile();
 
@@ -17,6 +19,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   localAppMaps.initialize();
   const { localTree } = registerTrees(localAppMaps);
+
+  if (!context.globalState.get(storeTelemetryInstallKey)) {
+    Telemetry.reportAction('plugin:install', undefined);
+    context.globalState.update(storeTelemetryInstallKey, true);
+  }
 
   context.subscriptions.push(
     vscode.commands.registerCommand('appmap.applyFilter', async () => {
