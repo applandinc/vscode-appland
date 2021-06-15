@@ -15,13 +15,39 @@ export class ScenarioProvider implements vscode.CustomTextEditorProvider {
       provider
     );
     context.subscriptions.push(providerRegistration);
+
+    context.subscriptions.push(
+      vscode.commands.registerCommand('appmap.getAppmapState', () => {
+        if (provider.currentWebView) {
+          provider.currentWebView.webview.postMessage({
+            type: 'requestAppmapState',
+          });
+        }
+      })
+    );
+
+    context.subscriptions.push(
+      vscode.commands.registerCommand('appmap.setAppmapState', async () => {
+        if (provider.currentWebView) {
+          const state = await vscode.window.showInputBox({
+            placeHolder: 'AppMap state serialized string',
+          });
+          if (state) {
+            provider.currentWebView.webview.postMessage({
+              type: 'setAppmapState',
+              state: state,
+            });
+          }
+        }
+      })
+    );
   }
 
   private static readonly viewType = 'appmap.views.appMapFile';
   private static readonly storeInstructionsKey = 'APPMAP_INSTRUCTIONS_VIEWED';
   private static readonly storeReleaseKey = 'APPMAP_RELEASE_KEY';
   private static readonly storeTelemetryInstallKey = 'APPMAP_TELEMETRY_INSTALL';
-  public static currentWebView;
+  public currentWebView;
 
   constructor(private readonly context: vscode.ExtensionContext) {}
 
@@ -33,7 +59,13 @@ export class ScenarioProvider implements vscode.CustomTextEditorProvider {
     webviewPanel: vscode.WebviewPanel
     /* _token: vscode.CancellationToken */
   ): Promise<void> {
-    ScenarioProvider.currentWebView = webviewPanel;
+    this.currentWebView = webviewPanel;
+
+    webviewPanel.onDidChangeViewState((e) => {
+      if (e.webviewPanel.active) {
+        this.currentWebView = e.webviewPanel;
+      }
+    });
 
     const updateWebview = () => {
       webviewPanel.webview.postMessage({
@@ -121,7 +153,7 @@ export class ScenarioProvider implements vscode.CustomTextEditorProvider {
     // Make sure we get rid of the listener when our editor is closed.
     webviewPanel.onDidDispose(() => {
       changeDocumentSubscription.dispose();
-      ScenarioProvider.currentWebView = null;
+      this.currentWebView = null;
     });
 
     function openFile(uri: vscode.Uri, lineNumber: number) {
