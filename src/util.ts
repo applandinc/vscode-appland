@@ -7,6 +7,7 @@ import {
   ExecOptions as ProcessExecOptions,
 } from 'child_process';
 import * as vscode from 'vscode';
+import Terminal, { TerminalResult } from './terminal';
 
 export function getNonce(): string {
   let text = '';
@@ -137,6 +138,23 @@ export async function execFile(
 
     output.append('\n');
   });
+}
+
+/**
+ * Exec a command in terminal
+ */
+export async function execCommand(
+  path: fs.PathLike,
+  program: string,
+  args?: ReadonlyArray<string> | null,
+  environment?: ReadonlyArray<string> | null,
+  terminalName?: string | null
+): Promise<TerminalResult> {
+  const cmd =
+    program + ' ' + (environment ? environment.join(' ') : '') + (args ? args.join(' ') : '');
+
+  const terminal = new Terminal(path, terminalName as string);
+  return terminal.run(cmd);
 }
 
 /**
